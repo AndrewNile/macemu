@@ -50,6 +50,7 @@ HOST_CC = gcc
 HOST_CXX = g++
 HOST_CFLAGS = -O2
 HOST_CXXFLAGS = -O2
+HOST_CPPFLAGS = @HOST_CPPFLAGS@ -I../include -I../Unix -I../CrossPlatform @CPUINCLUDES@ -I../slirp
 HOST_LDFLAGS =
 
 ## Files
@@ -141,9 +142,9 @@ depend dep:
 	makedepend $(CPPFLAGS) -Y. $(SRCS) 2>/dev/null
 
 $(OBJ_DIR)/%.ho : %.c
-	$(HOST_CC) $(CPPFLAGS) $(DEFS) $(HOST_CFLAGS) -c $< -o $@
+	$(HOST_CC) $(HOST_CPPFLAGS) $(DEFS) $(HOST_CFLAGS) -c $< -o $@
 $(OBJ_DIR)/%.ho : %.cpp
-	$(HOST_CXX) $(CPPFLAGS) $(DEFS) $(HOST_CXXFLAGS) -c $< -o $@
+	$(HOST_CXX) $(HOST_CPPFLAGS) $(DEFS) $(HOST_CXXFLAGS) -c $< -o $@
 $(OBJ_DIR)/slirp-%.o : ../slirp/%.c
 	$(CC) $(CPPFLAGS) $(DEFS) $(CFLAGS) $(SLIRP_CFLAGS) -c $< -o $@
 $(OBJ_DIR)/%.o : %.c
