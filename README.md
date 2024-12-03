@@ -28,7 +28,6 @@ $ ../Unix/autogen.sh --host=i686-w64-mingw32.static
 $ make
 ```
 #### SheepShaver
-##### MinGW32/MSYS2
 preparation: same as BasiliskII  
   
 build:
