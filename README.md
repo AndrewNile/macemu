@@ -1,3 +1,10 @@
+# Basilisk II
+Tweaked for compilation using the mxe.cc build environment on a Linux system. Forked from kanjitalk755's fork.
+
+mxe creates 100% statically-linked executables.
+
+Original instructions are below for the moment.
+
 #### BasiliskII
 ```
 macOS     x86_64 JIT / arm64 non-JIT
