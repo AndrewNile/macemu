@@ -949,7 +949,7 @@ tcp_emu(so, m)
 					*(so_rcv->sb_rptr + num) = 0;
 					if (ctl_password && !ctl_password_ok) {
 						/* Need a password */
-						if (sscanf(so_rcv->sb_rptr, "pass %256s", buff) == 1) {
+						if (sscanf(so_rcv->sb_rptr, "pass %255s", buff) == 1) {
 							if (strcmp(buff, ctl_password) == 0) {
 								ctl_password_ok = 1;
 								n = sprintf(so_snd->sb_wptr,
@@ -990,7 +990,7 @@ do_prompt:
 			/*
 			 * Need to emulate the PORT command
 			 */			
-			x = sscanf(bptr, "ORT %d,%d,%d,%d,%d,%d\r\n%256[^\177]", 
+			x = sscanf(bptr, "ORT %d,%d,%d,%d,%d,%d\r\n%255[^\177]", 
 				   &n1, &n2, &n3, &n4, &n5, &n6, buff);
 			if (x < 6)
 			   return 1;
@@ -1033,7 +1033,7 @@ do_prompt:
 			/*
 			 * Need to emulate the PASV response
 			 */
-			x = sscanf(bptr, "27 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n%256[^\177]",
+			x = sscanf(bptr, "27 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n%255[^\177]",
 				   &n1, &n2, &n3, &n4, &n5, &n6, buff);
 			if (x < 6)
 			   return 1;
@@ -1092,8 +1092,8 @@ do_prompt:
 		if ((bptr = (char *)strstr(m->m_data, "DCC")) == NULL)
 			 return 1;
 		
-		/* The %256s is for the broken mIRC */
-		if (sscanf(bptr, "DCC CHAT %256s %u %u", buff, &laddr, &lport) == 3) {
+		/* The %255s is for the broken mIRC */
+		if (sscanf(bptr, "DCC CHAT %255s %u %u", buff, &laddr, &lport) == 3) {
 			if ((so = solisten(0, htonl(laddr), htons(lport), SS_FACCEPTONCE)) == NULL)
 				return 1;
 			
@@ -1101,7 +1101,7 @@ do_prompt:
 			m->m_len += sprintf(bptr, "DCC CHAT chat %lu %u%c\n",
 			     (unsigned long)ntohl(so->so_faddr.s_addr),
 			     ntohs(so->so_fport), 1);
-		} else if (sscanf(bptr, "DCC SEND %256s %u %u %u", buff, &laddr, &lport, &n1) == 4) {
+		} else if (sscanf(bptr, "DCC SEND %255s %u %u %u", buff, &laddr, &lport, &n1) == 4) {
 			if ((so = solisten(0, htonl(laddr), htons(lport), SS_FACCEPTONCE)) == NULL)
 				return 1;
 			
@@ -1109,7 +1109,7 @@ do_prompt:
 			m->m_len += sprintf(bptr, "DCC SEND %s %lu %u %u%c\n", 
 			      buff, (unsigned long)ntohl(so->so_faddr.s_addr),
 			      ntohs(so->so_fport), n1, 1);
-		} else if (sscanf(bptr, "DCC MOVE %256s %u %u %u", buff, &laddr, &lport, &n1) == 4) {
+		} else if (sscanf(bptr, "DCC MOVE %255s %u %u %u", buff, &laddr, &lport, &n1) == 4) {
 			if ((so = solisten(0, htonl(laddr), htons(lport), SS_FACCEPTONCE)) == NULL)
 				return 1;
 			
@@ -1133,7 +1133,7 @@ do_prompt:
 		 * A typical packet for player version 1.0 (release version):
 		 *        
 		 * 0000:50 4E 41 00 05 
-		 * 0000:00 01 00 02 1B D7 00 00 67 E6 6C DC 63 00 12 50 .....◊..gÊl‹c..P
+		 * 0000:00 01 00 02 1B D7 00 00 67 E6 6C DC 63 00 12 50 .....√ó..g√¶l√úc..P
 		 * 0010:4E 43 4C 49 45 4E 54 20 31 30 31 20 41 4C 50 48 NCLIENT 101 ALPH
 		 * 0020:41 6C 00 00 52 00 17 72 61 66 69 6C 65 73 2F 76 Al..R..rafiles/v
 		 * 0030:6F 61 2F 65 6E 67 6C 69 73 68 5F 2E 72 61 79 42 oa/english_.rayB
@@ -1145,8 +1145,8 @@ do_prompt:
 		 *
 		 * A typical packet for player version 2.0 (beta):
 		 *        
-		 * 0000:50 4E 41 00 06 00 02 00 00 00 01 00 02 1B C1 00 PNA...........¡.
-		 * 0010:00 67 75 78 F5 63 00 0A 57 69 6E 32 2E 30 2E 30 .guxıc..Win2.0.0
+		 * 0000:50 4E 41 00 06 00 02 00 00 00 01 00 02 1B C1 00 PNA...........√Å.
+		 * 0010:00 67 75 78 F5 63 00 0A 57 69 6E 32 2E 30 2E 30 .gux√µc..Win2.0.0
 		 * 0020:2E 35 6C 00 00 52 00 1C 72 61 66 69 6C 65 73 2F .5l..R..rafiles/
 		 * 0030:77 65 62 73 69 74 65 2F 32 30 72 65 6C 65 61 73 website/20releas
 		 * 0040:65 2E 72 61 79 53 00 00 06 36 42                e.rayS...6B
