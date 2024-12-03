@@ -76,6 +76,11 @@ AC_PROG_EGREP
 AC_PROG_LN_S
 AC_CHECK_TOOL(WINDRES, windres)
 
+dnl Are we cross-compiling?
+if [[ "x$cross_compiling" = "xyes" ]]; then
+  HOST_PREFIX="${host}-"
+fi
+
 dnl We use GTK+ if possible.
 if [[ "x$WANT_GTK" = "xyes" ]]; then
   AM_PATH_GTK_2_0(1.3.15, [], [
@@ -560,12 +565,12 @@ CPUSRCS="../uae_cpu/basilisk_glue.cpp ../uae_cpu/memory.cpp ../uae_cpu/newcpu.cp
 
 dnl We really want SDL for now
 if [[ "x$WANT_SDL_VERSION_MAJOR" = "x3" ]]; then
-  SDL_CFLAGS=`pkg-config sdl3 --cflags`
+  SDL_CFLAGS=`${HOST_PREFIX}pkg-config sdl3 --cflags`
   SDL_CFLAGS+=`echo " $SDL_CFLAGS" | sed -e 's/\(-I.*include\)/\1\/SDL3/'`
-  SDL_LIBS=`pkg-config sdl3 --libs | sed -e 's/-lSDL3/-lSDL3.dll/'`
+  SDL_LIBS=`${HOST_PREFIX}pkg-config sdl3 --libs | sed -e 's/-lSDL3/-lSDL3.dll/'`
 else
-  SDL_CFLAGS=`sdl2-config --cflags`
-  SDL_LIBS=`sdl2-config --static-libs`
+  SDL_CFLAGS=`${HOST_PREFIX}sdl2-config --cflags`
+  SDL_LIBS=`${HOST_PREFIX}sdl2-config --static-libs`
 fi
 AC_SUBST(SDL_CFLAGS)
 AC_SUBST(SDL_LIBS)
