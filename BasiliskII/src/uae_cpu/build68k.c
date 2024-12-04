@@ -69,7 +69,15 @@ int main(int argc, char **argv)
 {
     int no_insns = 0;
 
+    // The file created from this program (cpudefs.cpp) is used in both
+    // two more native programs and BasiliskII itself.
+    printf ("#ifdef WIN32\n");
+    printf ("#include \"../Windows/sysdeps.h\"\n");
+    printf ("#elif __unix__\n");
+    printf ("#include \"../Unix/sysdeps.h\"\n");
+    printf ("#else\n");
     printf ("#include \"sysdeps.h\"\n");
+    printf ("#endif\n");
     printf ("#include \"readcpu.h\"\n");
     printf ("struct instr_def defs68k[] = {\n");
 //#ifdef WIN32
