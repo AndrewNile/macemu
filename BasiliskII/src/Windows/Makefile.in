@@ -50,7 +50,7 @@ HOST_CC = gcc
 HOST_CXX = g++
 HOST_CFLAGS = -O2
 HOST_CXXFLAGS = -O2
-HOST_CPPFLAGS = @HOST_CPPFLAGS@ -I../include -I../Unix -I../CrossPlatform @CPUINCLUDES@ -I../slirp
+HOST_CPPFLAGS = -I../include -I../Unix -I../CrossPlatform @CPUINCLUDES@ -I../slirp
 HOST_LDFLAGS =
 
 ## Files
