@@ -81,18 +81,26 @@ int main()
 {
     int no_insns = 0;
 
+    // The file created from this program (cpudefs.cpp) is used in both
+    // two more native programs and BasiliskII itself.
+    printf ("#ifdef WIN32\n");
+    printf ("#include \"../Windows/sysdeps.h\"\n");
+    printf ("#elif __unix__\n");
+    printf ("#include \"../Unix/sysdeps.h\"\n");
+    printf ("#else\n");
     printf ("#include \"sysdeps.h\"\n");
+    printf ("#endif\n");
     printf ("#include \"readcpu.h\"\n");
     printf ("struct instr_def defs68k[] = {\n");
-#if 0
+//#if 0
     tablef = fopen("table68k","r");
     if (tablef == NULL) {
 	fprintf(stderr, "table68k not found\n");
 	exit(1);
     }
-#else
-    tablef = stdin;
-#endif
+//#else
+//    tablef = stdin;
+//#endif
     getnextch();
     while (nextch != EOF) {
 	int cpulevel, plevel, sduse;
