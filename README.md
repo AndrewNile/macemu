@@ -23,6 +23,11 @@ $ make gtk2 sdl2 sdl2_image sdl_sound zlib zstd
 ```
 build:
 ```
+(Step 1: Generates config.h for host compiler)
+$ cd macemu/BasiliskII/src/uae_cpu
+$ ../Unix/autogen.sh
+
+(Step 2: The rest)
 $ cd macemu/BasiliskII/src/Windows
 $ ../Unix/autogen.sh --host=i686-w64-mingw32.static
 $ make
