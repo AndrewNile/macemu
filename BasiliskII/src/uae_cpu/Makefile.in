@@ -1,0 +1,6 @@
+clean: 
+	rm -rf autom4te.cache
+	rm -f Makefile
+	rm -f config.cache config.log config.status config.h
+	
+distclean: clean
