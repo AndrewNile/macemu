@@ -16,12 +16,12 @@ MinGW x86        JIT
 ### How To Build
 
 #### BasiliskII
-preparation:
+Preparation:
 ```
 (from the mxe directory)
 $ make gtk2 sdl2 sdl2_image sdl_sound zlib zstd
 ```
-build:
+Build:
 ```
 (Step 1: Generates config.h for host compiler)
 $ cd macemu/BasiliskII/src/uae_cpu
@@ -32,10 +32,23 @@ $ cd macemu/BasiliskII/src/Windows
 $ ../Unix/autogen.sh --host=i686-w64-mingw32.static
 $ make
 ```
+Build Options (append to the end of autogen.sh command):
+```
+--enable-jit-compiler   enable JIT compiler [default=yes]
+--enable-jit-debug      activate native code disassemblers [default=no]
+--enable-fpe=FPE        specify which fpu emulator to use [ieee uae x86][default=ieee]
+--enable-addressing=AM  specify the addressing mode to use [direct banks fastest][default=fastest]
+
+--with-gtk              use GTK user interface [default=yes]
+--with-sdl3             use SDL 3.x, rather than SDL 2.x [default=no]
+
+--enable-vosf           enable video on SEGV signals [default=no]
+--with-bincue           Allow cdrom image files in bin/cue mode [default=no]
+```
 #### SheepShaver
-preparation: same as BasiliskII  
+Preparation: same as BasiliskII  
   
-build:
+Build:
 ```
 $ cd macemu/SheepShaver
 $ make links
