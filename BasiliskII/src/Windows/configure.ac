@@ -1,11 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl Written in 2002 by Christian Bauer et al.
 
-AC_INIT([Basilisk II], 1.0, [Christian.Bauer@uni-mainz.de], BasiliskII)
+AC_INIT([Basilisk II],[1.0],[Christian.Bauer@uni-mainz.de],[BasiliskII])
 AC_CONFIG_SRCDIR(main_windows.cpp)
 AC_CONFIG_AUX_DIR(../Unix)
-AC_PREREQ(2.52)
-AC_CONFIG_HEADER(config.h)
+AC_PREREQ([2.71])
+AC_CONFIG_HEADERS(config.h)
 
 dnl Aliases for PACKAGE and VERSION macros.
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE_NAME", [Define this program name.])
@@ -101,9 +101,6 @@ AS_IF([test  "x$have_bincue" = "xyes" ], [
    AC_SUBST(USE_BINCUE, yes)
 ], [AC_SUBST(USE_BINCUE, no)])
 
-dnl Checks for header files.
-AC_HEADER_STDC
-
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN
 AC_C_CONST
@@ -139,29 +136,23 @@ dnl Check that VirtualAlloc(), VirtualProtect() work
 AC_CACHE_CHECK([whether VirtualProtect works],
   ac_cv_VirtualProtect_works, [
   AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
+  AC_LANG([C++])
   ac_cv_VirtualProtect_works=yes
   dnl First the tests that should segfault
   for test_def in NONE_READ NONE_WRITE READ_WRITE; do
-    AC_TRY_RUN([
+    AC_RUN_IFELSE([AC_LANG_SOURCE([[
       #define HAVE_WIN32_VM 1
       #define CONFIGURE_TEST_VM_MAP
       #define TEST_VM_PROT_$test_def
       #include "../CrossPlatform/vm_alloc.cpp"
-    ], ac_cv_VirtualProtect_works=no, rm -f core,
-    dnl When cross-compiling, assume it works
-    ac_cv_VirtualProtect_works="yes"
-    )
+    ]])],[ac_cv_VirtualProtect_works=no],[rm -f core],[dnl When cross-compiling])
   done
-  AC_TRY_RUN([
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
     #define HAVE_WIN32_VM 1
     #define CONFIGURE_TEST_VM_MAP
     #define TEST_VM_PROT_RDWR_WRITE
     #include "../CrossPlatform/vm_alloc.cpp"
-  ], , ac_cv_VirtualProtect_works=no,
-  dnl When cross-compiling, assume it works
-  ac_cv_VirtualProtect_works="yes"
-  )
+  ]])],[],[ac_cv_VirtualProtect_works=no],[dnl When cross-compiling])
   AC_LANG_RESTORE
   ]
 )
@@ -175,7 +166,7 @@ dnl Check if Windows exceptions are supported.
 AC_CACHE_CHECK([whether your system supports Windows exceptions],
   ac_cv_have_win32_exceptions, [
   AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
+  AC_LANG([C++])
   AC_TRY_RUN([
     #define HAVE_WIN32_EXCEPTIONS 1
     #define CONFIGURE_TEST_SIGSEGV_RECOVERY
@@ -200,7 +191,7 @@ dnl Check if we can ignore the fault (instruction skipping in SIGSEGV handler)
 AC_CACHE_CHECK([whether we can skip instruction in SIGSEGV handler],
   ac_cv_have_skip_instruction, [
   AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
+  AC_LANG([C++])
   AC_TRY_RUN([
     #define HAVE_SIGSEGV_SKIP_INSTRUCTION 1
     #define CONFIGURE_TEST_SIGSEGV_RECOVERY
@@ -288,9 +279,7 @@ if [[ "x$HAVE_GCC30" = "xyes" ]]; then
   CFLAGS="$CFLAGS -fno-strict-aliasing"
   AC_CACHE_CHECK([whether the compiler supports -fno-strict-aliasing],
     ac_cv_gcc_no_strict_aliasing, [
-    AC_TRY_COMPILE([],[],
-      [ac_cv_gcc_no_strict_aliasing=yes],
-      [ac_cv_gcc_no_strict_aliasing=no])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[ac_cv_gcc_no_strict_aliasing=yes],[ac_cv_gcc_no_strict_aliasing=no])
   ])
   CFLAGS="$SAVED_CFLAGS"
   if test "x$ac_cv_gcc_no_strict_aliasing" = xyes; then
@@ -349,9 +338,9 @@ if [[ "x$WANT_JIT" = "xyes" -a "x$CAN_JIT" ]]; then
   dnl IEEE core is the only FPU emulator to use with the JIT compiler
   case $FPE_CORE_TEST_ORDER in
   ieee*) ;;
-  *) AC_MSG_WARN([Forcing use of the IEEE FPU core, as the JIT compiler supports only this one.]) ;;
+  *) AC_MSG_WARN([The JIT compiler technically only supports the IEEE FPU core.]) ;;
   esac
-  FPE_CORE_TEST_ORDER="ieee"
+  #FPE_CORE_TEST_ORDER="ieee"
 else
   WANT_JIT=no
   WANT_JIT_DEBUG=no
@@ -375,7 +364,7 @@ dnl may be examined by the commands in the second argument.
 dnl
 AC_DEFUN([gcc_AC_EXAMINE_OBJECT],
 [AC_LANG_SAVE
-AC_LANG_C
+AC_LANG([C])
 dnl Next bit cribbed from AC_TRY_COMPILE.
 cat > conftest.$ac_ext <<EOF
 [#line __oline__ "configure"
