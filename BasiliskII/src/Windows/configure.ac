@@ -12,7 +12,8 @@ AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE_NAME", [Define this program name.])
 AC_DEFINE_UNQUOTED(VERSION, "$PACKAGE_VERSION", [Define this program version.])
 
 dnl JIT compiler options.
-AC_ARG_ENABLE(jit-compiler,  [  --enable-jit-compiler   enable JIT compiler [default=yes]], [WANT_JIT=$enableval], [WANT_JIT=yes])
+AC_ARG_ENABLE(jit-compiler,  [  --enable-jit-compiler   enable JIT compiler for CPU [default=yes]], [WANT_JIT=$enableval], [WANT_JIT=yes])
+AC_ARG_ENABLE(jit-fpu,       [  --enable-jit-fpu        enable JIT compiler for FPU [default=yes]], [WANT_JIT_FPU=$enableval], [WANT_JIT_FPU=yes])
 AC_ARG_ENABLE(jit-debug,     [  --enable-jit-debug      activate native code disassemblers [default=no]], [WANT_JIT_DEBUG=$enableval], [WANT_JIT_DEBUG=no])
 
 dnl FPU emulation core.
@@ -32,7 +33,7 @@ AC_ARG_ENABLE(fpe,
 
 dnl External packages.
 AC_ARG_WITH(gtk,             [  --with-gtk              use GTK user interface [default=yes]], [WANT_GTK=$withval], [WANT_GTK=yes])
-AC_ARG_ENABLE(vosf,         [  --enable-vosf           enable video on SEGV signals [default=no]], [WANT_VOSF=$enableval], [WANT_VOSF=no])
+AC_ARG_ENABLE(vosf,          [  --enable-vosf           enable video on SEGV signals [default=no]], [WANT_VOSF=$enableval], [WANT_VOSF=no])
 
 AC_ARG_WITH(bincue,   
   AS_HELP_STRING([--with-bincue], [Allow cdrom image files in bin/cue mode]))
@@ -245,6 +246,12 @@ if [[ "x$WANT_JIT" = "xyes" -a "x$ADDRESSING_MODE" = "xmemory banks" ]]; then
   AC_MSG_ERROR([Sorry, the JIT Compiler requires Direct Addressing, at least])
 fi
 
+dnl Can't have FPU JIT on with CPU JIT off
+if [[ "x$WANT_JIT" = "xno" -a "x$WANT_JIT_FPU" = "xyes" ]]; then
+  AC_MSG_WARN([You need CPU JIT enabled to use FPU JIT compilation. Disabling FPU JIT.])
+  WANT_JIT_FPU=no
+fi
+
 dnl Check for GAS.
 HAVE_GAS=no
 AC_MSG_CHECKING(for GAS .p2align feature)
@@ -324,7 +331,7 @@ fi
 dnl Enable JIT compiler, if possible.
 if [[ "x$WANT_JIT" = "xyes" -a "x$CAN_JIT" ]]; then
   JITSRCS="$JITSRCS ../uae_cpu/compiler/compemu_support.cpp ../uae_cpu/compiler/compemu_fpp.cpp compstbl.o cpustbl_nf.o"
-  DEFINES="$DEFINES -DUSE_JIT -DUSE_JIT_FPU"
+  DEFINES="$DEFINES -DUSE_JIT"
   
   if [[ "x$WANT_JIT_DEBUG" = "xyes" ]]; then
     if [[ "x$WANT_MON" = "xyes" ]]; then
@@ -335,17 +342,25 @@ if [[ "x$WANT_JIT" = "xyes" -a "x$CAN_JIT" ]]; then
     fi
   fi
 
-  dnl IEEE core is the only FPU emulator to use with the JIT compiler
-  case $FPE_CORE_TEST_ORDER in
-  ieee*) ;;
-  *) AC_MSG_WARN([The JIT compiler technically only supports the IEEE FPU core.]) ;;
-  esac
-  #FPE_CORE_TEST_ORDER="ieee"
+  dnl Enable JIT for FPU
+  if [[ "x$WANT_JIT_FPU" = "xyes" ]]; then
+    DEFINES="$DEFINES -DUSE_JIT_FPU"
+    
+    dnl IEEE core is the only FPU emulator to use with the JIT compiler
+    case $FPE_CORE_TEST_ORDER in
+    ieee*) ;;
+    *) AC_MSG_WARN([The JIT compiler only supports the IEEE FPU core.]) ;;
+    esac
+    FPE_CORE_TEST_ORDER="ieee"
+  fi
+
 else
   WANT_JIT=no
+  WANT_JIT_FPU=no
   WANT_JIT_DEBUG=no
   JITSRCS=""
 fi
+
 
 dnl Utility macro used by next two tests.
 dnl AC_EXAMINE_OBJECT(C source code,
@@ -589,7 +604,8 @@ echo
 echo Basilisk II configuration summary:
 echo
 echo SDL major-version ...................... : $WANT_SDL_VERSION_MAJOR
-echo Use JIT compiler ....................... : $WANT_JIT
+echo Use JIT compiler for CPU................ : $WANT_JIT
+echo Use JIT compiler for FPU................ : $WANT_JIT_FPU
 echo JIT debug mode ......................... : $WANT_JIT_DEBUG
 echo Floating-Point emulation core .......... : $FPE_CORE
 echo Assembly optimizations ................. : $ASM_OPTIMIZATIONS
