@@ -1,19 +1,18 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl Written in 2002 by Christian Bauer et al.
 
-AC_INIT([Basilisk II],[1.0],[Christian.Bauer@uni-mainz.de],[BasiliskII])
+AC_INIT([Basilisk II], 1.0, [Christian.Bauer@uni-mainz.de], BasiliskII)
 AC_CONFIG_SRCDIR(main_windows.cpp)
 AC_CONFIG_AUX_DIR(../Unix)
-AC_PREREQ([2.71])
-AC_CONFIG_HEADERS(config.h)
+AC_PREREQ(2.52)
+AC_CONFIG_HEADER(config.h)
 
 dnl Aliases for PACKAGE and VERSION macros.
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE_NAME", [Define this program name.])
 AC_DEFINE_UNQUOTED(VERSION, "$PACKAGE_VERSION", [Define this program version.])
 
 dnl JIT compiler options.
-AC_ARG_ENABLE(jit-compiler,  [  --enable-jit-compiler   enable JIT compiler for CPU [default=yes]], [WANT_JIT=$enableval], [WANT_JIT=yes])
-AC_ARG_ENABLE(jit-fpu,       [  --enable-jit-fpu        enable JIT compiler for FPU [default=yes]], [WANT_JIT_FPU=$enableval], [WANT_JIT_FPU=yes])
+AC_ARG_ENABLE(jit-compiler,  [  --enable-jit-compiler   enable JIT compiler [default=yes]], [WANT_JIT=$enableval], [WANT_JIT=yes])
 AC_ARG_ENABLE(jit-debug,     [  --enable-jit-debug      activate native code disassemblers [default=no]], [WANT_JIT_DEBUG=$enableval], [WANT_JIT_DEBUG=no])
 
 dnl FPU emulation core.
@@ -33,7 +32,7 @@ AC_ARG_ENABLE(fpe,
 
 dnl External packages.
 AC_ARG_WITH(gtk,             [  --with-gtk              use GTK user interface [default=yes]], [WANT_GTK=$withval], [WANT_GTK=yes])
-AC_ARG_ENABLE(vosf,          [  --enable-vosf           enable video on SEGV signals [default=no]], [WANT_VOSF=$enableval], [WANT_VOSF=no])
+AC_ARG_ENABLE(vosf,         [  --enable-vosf           enable video on SEGV signals [default=no]], [WANT_VOSF=$enableval], [WANT_VOSF=no])
 
 AC_ARG_WITH(bincue,   
   AS_HELP_STRING([--with-bincue], [Allow cdrom image files in bin/cue mode]))
@@ -77,11 +76,6 @@ AC_PROG_EGREP
 AC_PROG_LN_S
 AC_CHECK_TOOL(WINDRES, windres)
 
-dnl Are we cross-compiling?
-if [[ "x$cross_compiling" = "xyes" ]]; then
-  HOST_PREFIX="${host}-"
-fi
-
 dnl We use GTK+ if possible.
 if [[ "x$WANT_GTK" = "xyes" ]]; then
   AM_PATH_GTK_2_0(1.3.15, [], [
@@ -101,6 +95,9 @@ AS_IF([test  "x$have_bincue" = "xyes" ], [
    CPPFLAGS="$CPPFLAGS -DBINCUE"
    AC_SUBST(USE_BINCUE, yes)
 ], [AC_SUBST(USE_BINCUE, no)])
+
+dnl Checks for header files.
+AC_HEADER_STDC
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN
@@ -137,23 +134,29 @@ dnl Check that VirtualAlloc(), VirtualProtect() work
 AC_CACHE_CHECK([whether VirtualProtect works],
   ac_cv_VirtualProtect_works, [
   AC_LANG_SAVE
-  AC_LANG([C++])
+  AC_LANG_CPLUSPLUS
   ac_cv_VirtualProtect_works=yes
   dnl First the tests that should segfault
   for test_def in NONE_READ NONE_WRITE READ_WRITE; do
-    AC_RUN_IFELSE([AC_LANG_SOURCE([[
+    AC_TRY_RUN([
       #define HAVE_WIN32_VM 1
       #define CONFIGURE_TEST_VM_MAP
       #define TEST_VM_PROT_$test_def
       #include "../CrossPlatform/vm_alloc.cpp"
-    ]])],[ac_cv_VirtualProtect_works=no],[rm -f core],[dnl When cross-compiling])
+    ], ac_cv_VirtualProtect_works=no, rm -f core,
+    dnl When cross-compiling, assume it works
+    ac_cv_VirtualProtect_works="yes"
+    )
   done
-  AC_RUN_IFELSE([AC_LANG_SOURCE([[
+  AC_TRY_RUN([
     #define HAVE_WIN32_VM 1
     #define CONFIGURE_TEST_VM_MAP
     #define TEST_VM_PROT_RDWR_WRITE
     #include "../CrossPlatform/vm_alloc.cpp"
-  ]])],[],[ac_cv_VirtualProtect_works=no],[dnl When cross-compiling])
+  ], , ac_cv_VirtualProtect_works=no,
+  dnl When cross-compiling, assume it works
+  ac_cv_VirtualProtect_works="yes"
+  )
   AC_LANG_RESTORE
   ]
 )
@@ -167,7 +170,7 @@ dnl Check if Windows exceptions are supported.
 AC_CACHE_CHECK([whether your system supports Windows exceptions],
   ac_cv_have_win32_exceptions, [
   AC_LANG_SAVE
-  AC_LANG([C++])
+  AC_LANG_CPLUSPLUS
   AC_TRY_RUN([
     #define HAVE_WIN32_EXCEPTIONS 1
     #define CONFIGURE_TEST_SIGSEGV_RECOVERY
@@ -192,7 +195,7 @@ dnl Check if we can ignore the fault (instruction skipping in SIGSEGV handler)
 AC_CACHE_CHECK([whether we can skip instruction in SIGSEGV handler],
   ac_cv_have_skip_instruction, [
   AC_LANG_SAVE
-  AC_LANG([C++])
+  AC_LANG_CPLUSPLUS
   AC_TRY_RUN([
     #define HAVE_SIGSEGV_SKIP_INSTRUCTION 1
     #define CONFIGURE_TEST_SIGSEGV_RECOVERY
@@ -246,12 +249,6 @@ if [[ "x$WANT_JIT" = "xyes" -a "x$ADDRESSING_MODE" = "xmemory banks" ]]; then
   AC_MSG_ERROR([Sorry, the JIT Compiler requires Direct Addressing, at least])
 fi
 
-dnl Can't have FPU JIT on with CPU JIT off
-if [[ "x$WANT_JIT" = "xno" -a "x$WANT_JIT_FPU" = "xyes" ]]; then
-  AC_MSG_WARN([You need CPU JIT enabled to use FPU JIT compilation. Disabling FPU JIT.])
-  WANT_JIT_FPU=no
-fi
-
 dnl Check for GAS.
 HAVE_GAS=no
 AC_MSG_CHECKING(for GAS .p2align feature)
@@ -286,7 +283,9 @@ if [[ "x$HAVE_GCC30" = "xyes" ]]; then
   CFLAGS="$CFLAGS -fno-strict-aliasing"
   AC_CACHE_CHECK([whether the compiler supports -fno-strict-aliasing],
     ac_cv_gcc_no_strict_aliasing, [
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[ac_cv_gcc_no_strict_aliasing=yes],[ac_cv_gcc_no_strict_aliasing=no])
+    AC_TRY_COMPILE([],[],
+      [ac_cv_gcc_no_strict_aliasing=yes],
+      [ac_cv_gcc_no_strict_aliasing=no])
   ])
   CFLAGS="$SAVED_CFLAGS"
   if test "x$ac_cv_gcc_no_strict_aliasing" = xyes; then
@@ -331,7 +330,7 @@ fi
 dnl Enable JIT compiler, if possible.
 if [[ "x$WANT_JIT" = "xyes" -a "x$CAN_JIT" ]]; then
   JITSRCS="$JITSRCS ../uae_cpu/compiler/compemu_support.cpp ../uae_cpu/compiler/compemu_fpp.cpp compstbl.o cpustbl_nf.o"
-  DEFINES="$DEFINES -DUSE_JIT"
+  DEFINES="$DEFINES -DUSE_JIT -DUSE_JIT_FPU"
   
   if [[ "x$WANT_JIT_DEBUG" = "xyes" ]]; then
     if [[ "x$WANT_MON" = "xyes" ]]; then
@@ -342,25 +341,17 @@ if [[ "x$WANT_JIT" = "xyes" -a "x$CAN_JIT" ]]; then
     fi
   fi
 
-  dnl Enable JIT for FPU
-  if [[ "x$WANT_JIT_FPU" = "xyes" ]]; then
-    DEFINES="$DEFINES -DUSE_JIT_FPU"
-    
-    dnl IEEE core is the only FPU emulator to use with the JIT compiler
-    case $FPE_CORE_TEST_ORDER in
-    ieee*) ;;
-    *) AC_MSG_WARN([The JIT compiler only supports the IEEE FPU core.]) ;;
-    esac
-    FPE_CORE_TEST_ORDER="ieee"
-  fi
-
+  dnl IEEE core is the only FPU emulator to use with the JIT compiler
+  case $FPE_CORE_TEST_ORDER in
+  ieee*) ;;
+  *) AC_MSG_WARN([Forcing use of the IEEE FPU core, as the JIT compiler supports only this one.]) ;;
+  esac
+  FPE_CORE_TEST_ORDER="ieee"
 else
   WANT_JIT=no
-  WANT_JIT_FPU=no
   WANT_JIT_DEBUG=no
   JITSRCS=""
 fi
-
 
 dnl Utility macro used by next two tests.
 dnl AC_EXAMINE_OBJECT(C source code,
@@ -379,7 +370,7 @@ dnl may be examined by the commands in the second argument.
 dnl
 AC_DEFUN([gcc_AC_EXAMINE_OBJECT],
 [AC_LANG_SAVE
-AC_LANG([C])
+AC_LANG_C
 dnl Next bit cribbed from AC_TRY_COMPILE.
 cat > conftest.$ac_ext <<EOF
 [#line __oline__ "configure"
@@ -569,12 +560,12 @@ CPUSRCS="../uae_cpu/basilisk_glue.cpp ../uae_cpu/memory.cpp ../uae_cpu/newcpu.cp
 
 dnl We really want SDL for now
 if [[ "x$WANT_SDL_VERSION_MAJOR" = "x3" ]]; then
-  SDL_CFLAGS=`${HOST_PREFIX}pkg-config sdl3 --cflags`
+  SDL_CFLAGS=`pkg-config sdl3 --cflags`
   SDL_CFLAGS="$SDL_CFLAGS `echo " $SDL_CFLAGS" | sed -e 's/\(-I.*include\)/\1\/SDL3/'`"
-  SDL_LIBS=`${HOST_PREFIX}pkg-config sdl3 --libs | sed -e 's/-lSDL3/-lSDL3.dll/'`
+  SDL_LIBS=`pkg-config sdl3 --libs | sed -e 's/-lSDL3/-lSDL3.dll/'`
 else
-  SDL_CFLAGS=`${HOST_PREFIX}sdl2-config --cflags`
-  SDL_LIBS=`${HOST_PREFIX}sdl2-config --static-libs`
+  SDL_CFLAGS=`sdl2-config --cflags`
+  SDL_LIBS=`sdl2-config --static-libs`
 fi
 AC_SUBST(SDL_CFLAGS)
 AC_SUBST(SDL_LIBS)
@@ -604,8 +595,7 @@ echo
 echo Basilisk II configuration summary:
 echo
 echo SDL major-version ...................... : $WANT_SDL_VERSION_MAJOR
-echo Use JIT compiler for CPU................ : $WANT_JIT
-echo Use JIT compiler for FPU................ : $WANT_JIT_FPU
+echo Use JIT compiler ....................... : $WANT_JIT
 echo JIT debug mode ......................... : $WANT_JIT_DEBUG
 echo Floating-Point emulation core .......... : $FPE_CORE
 echo Assembly optimizations ................. : $ASM_OPTIMIZATIONS
