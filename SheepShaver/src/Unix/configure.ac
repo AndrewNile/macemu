@@ -223,9 +223,10 @@ if [[ "x$WANT_SDL" = "xyes" ]]; then
 
     if [[ "x$TEMP_WANT_SDL_VERSION_MAJOR" = "x3" ]]; then
       PKG_CHECK_MODULES([sdl3], [sdl3 >= 3.0], [
+        CFLAGS="$CFLAGS $sdl3_CFLAGS"
         CXXFLAGS="$CXXFLAGS $sdl3_CFLAGS"
-        CXXFLAGS="$CXXFLAGS `echo " $sdl3_CFLAGS" | sed -e 's/\(-I.*include\)/\1\/SDL3/'`"
         LIBS="$LIBS $sdl3_LIBS"
+        AC_DEFINE([USE_SDL3], [1], [Use SDL3])
         WANT_SDL_VERSION_MAJOR=3
       ], [
         TEMP_WANT_SDL_VERSION_MAJOR=1
@@ -233,8 +234,10 @@ if [[ "x$WANT_SDL" = "xyes" ]]; then
     fi
     if [[ "x$TEMP_WANT_SDL_VERSION_MAJOR" = "x2" ]]; then
       PKG_CHECK_MODULES([sdl2], [sdl2 >= 2.0], [
+        CFLAGS="$CFLAGS $sdl2_CFLAGS"
         CXXFLAGS="$CXXFLAGS $sdl2_CFLAGS"
         LIBS="$LIBS $sdl2_LIBS"
+        AC_DEFINE([USE_SDL2], [1], [Use SDL2])
         WANT_SDL_VERSION_MAJOR=2
       ], [
         TEMP_WANT_SDL_VERSION_MAJOR=1
@@ -1605,7 +1608,7 @@ if [[ "x$EMULATED_PPC" = "xyes" ]]; then
           DYNGEN_CC=$CXX
         elif command -v g++ >/dev/null; then
           vers=`g++ -dumpversion`
-          function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
+          version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
           if [[ $(version $vers) -ge $(version "2.7.0") ]] && [[ $(version $vers) -lt $(version "4.0.0") ]]; then
             DYNGEN_CC="$gxx"
           fi

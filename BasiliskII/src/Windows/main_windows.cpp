@@ -25,7 +25,7 @@
 #include <signal.h>
 #include <errno.h>
 
-#include <SDL.h>
+#include "my_sdl.h"
 #include <SDL_mutex.h>
 #include <SDL_thread.h>
 
@@ -475,11 +475,8 @@ void QuitEmulator(void)
 
 	// Free ROM/RAM areas
 	if (RAMBaseHost != VM_MAP_FAILED) {
-		vm_release(RAMBaseHost, RAMSize);
+		vm_release(RAMBaseHost, RAMSize + 0x100000);
 		RAMBaseHost = NULL;
-	}
-	if (ROMBaseHost != VM_MAP_FAILED) {
-		vm_release(ROMBaseHost, 0x100000);
 		ROMBaseHost = NULL;
 	}
 
